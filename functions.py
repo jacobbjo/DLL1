@@ -1,0 +1,46 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
+def unpickle(file):
+    import pickle
+    with open(file, 'rb') as fo:
+        dict = pickle.load(fo, encoding='bytes')
+    return dict
+
+def readfile(file):
+    file_dict = unpickle(file)
+    data = file_dict[b"data"]
+    labels = file_dict[b"labels"]
+
+    # Generate one hot representation of the labels:
+    one_hots = np.zeros((10, len(labels)))
+
+    for ind, label in enumerate(labels):
+        one_hots[label, ind] = 1
+
+    return np.transpose(data/255), one_hots, labels
+
+def softmax(s):
+    return np.exp(s)/np.sum(np.exp(s), axis=0)
+
+def evaluate_classifier(X, W, b):
+    s = np.matmul(W, X) + b
+    P = softmax(s)
+    return P
+
+def compute_cost(X, Y, W, b, lamb):
+    """the sum of the loss of the network’s predictions for the images in X relative to
+    the ground truth labels and the regularization term on W"""
+
+    P = evaluate_classifier(X, W, b)
+
+    cross = -1/X.shape[1] * np.sum(np.log(np.matmul(np.transpose(Y), P)))
+
+    J = cross + lamb * np.sum(np.power(W, 2))
+
+    return J
+
+def disp_img(image):
+    plt.imshow(np.transpose(image.reshape(3, 32, 32), (1, 2, 0)))
+    plt.show()
+
