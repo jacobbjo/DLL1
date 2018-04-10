@@ -1,11 +1,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def unpickle(file):
     import pickle
     with open(file, 'rb') as fo:
         dict = pickle.load(fo, encoding='bytes')
     return dict
+
 
 def readfile(file):
     file_dict = unpickle(file)
@@ -18,27 +20,39 @@ def readfile(file):
     for ind, label in enumerate(labels):
         one_hots[label, ind] = 1
 
-    return np.transpose(data/255), one_hots, labels
+    return np.transpose(data/255), one_hots, np.array(labels)
+
 
 def softmax(s):
     return np.exp(s)/np.sum(np.exp(s), axis=0)
+
 
 def evaluate_classifier(X, W, b):
     s = np.matmul(W, X) + b
     P = softmax(s)
     return P
 
+
 def compute_cost(X, Y, W, b, lamb):
     """the sum of the loss of the network’s predictions for the images in X relative to
     the ground truth labels and the regularization term on W"""
 
     P = evaluate_classifier(X, W, b)
-
     cross = -1/X.shape[1] * np.sum(np.log(np.matmul(np.transpose(Y), P)))
-
     J = cross + lamb * np.sum(np.power(W, 2))
-
     return J
+
+
+def compute_accuracy(X, y, W, b):
+    P = evaluate_classifier(X, W, b)
+    preds = np.argmax(P, axis=0) #the predicted class for each picture
+    are_equal = np.sum(preds == y)
+    return are_equal/preds.shape[0]
+
+
+def compute_gradients(X, Y, P, W, lamb):
+    print("lol")
+
 
 def disp_img(image):
     plt.imshow(np.transpose(image.reshape(3, 32, 32), (1, 2, 0)))
