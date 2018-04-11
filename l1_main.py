@@ -12,13 +12,13 @@ def main():
     W = np.random.normal(0, 0.01, (am_labels, dim_img))
     b = np.random.normal(0, 0.01, (am_labels, 1))
 
-    #P = evaluate_classifier(X_tr[:, 0:100], W, b)
+    P = evaluate_classifier(X_tr[:, 0:100], W, b)
     #print(P)
 
-    acc = compute_accuracy(X_tr[:, 0:100], y_tr[:100], W, b)
-    print(acc)
+    #acc = compute_accuracy(X_tr[:, 0:100], y_tr[:100], W, b)
+    #print(acc)
 
-
+    compute_gradients(X_tr[:, 0:100], Y_tr[:, 0:100], P, W, 0.001)
 
 
 
