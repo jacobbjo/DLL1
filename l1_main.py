@@ -18,9 +18,7 @@ def main():
     #acc = compute_accuracy(X_tr[:, 0:100], y_tr[:100], W, b)
     #print(acc)
 
-    compute_gradients(X_tr[:, 0:100], Y_tr[:, 0:100], P, W, 0.001)
-
-
+    djdw, djdb = compute_gradients(X_tr[:, 0:100], Y_tr[:, 0:100], P, W, 0.001)
 
     disp_img(X_test[:,1])
 

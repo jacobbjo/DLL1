@@ -51,33 +51,30 @@ def compute_accuracy(X, y, W, b):
 
 
 def compute_gradients(X, Y, P, W, lamb):
-    # From lecture 3 we can deduct that we need:
-    # 𝛿J/𝛿b =
-    # 𝛿J/𝛿s * 𝛿s/𝛿b =
-    # 𝛿J/𝛿p * 𝛿p/𝛿s * 𝛿s/𝛿b =
-    # 𝛿J/𝛿l * 𝛿l/𝛿p * 𝛿p/𝛿s * 𝛿s/𝛿b =
-    # 𝛿J/𝛿J * 𝛿J/𝛿l * 𝛿l/𝛿p * 𝛿p/𝛿s * 𝛿s/𝛿b
+    #g =−(y−p)T
 
-    # And:
-    # 𝛿J/𝛿W =
-    # 𝛿J/𝛿z * 𝛿z/𝛿W + 𝛿J/𝛿r * 𝛿r/𝛿w =
-    # 𝛿J/𝛿s * 𝛿s/𝛿z * 𝛿z/𝛿W + 𝛿J/𝛿J * 𝛿J/𝛿r * 𝛿r/𝛿W
+    # initializing gradient variables
+    dldb = np.zeros((Y.shape[0], 1))
+    dldw = np.zeros(W.shape)
 
-    # So:
+    g = -np.transpose(Y - P)
 
-    djdj = 1
+    dldb = np.sum(g, axis=0)
 
-    djdl = 1 #*djdj
+    for ind, picture in  enumerate(X.T):
+        gpart = g[ind, :].reshape(-1, 1)
+        add = np.matmul(gpart, picture.reshape(-1, 1).T)
+        dldw += add
 
-    dldp = np.sum((Y * (-1/P)), axis=1)
+    dldb /= X.shape[1]
+    dldw /= X.shape[1]
 
 
+    djdw = dldw + 2 * lamb * W
+    djdb = dldb
 
+    return djdw, djdb
 
-    djdr = lamb
-
-
-    print("lol")
 
 
 def disp_img(image):
