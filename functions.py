@@ -51,8 +51,6 @@ def compute_accuracy(X, y, W, b):
 
 
 def compute_gradients(X, Y, P, W, lamb):
-    #g =−(y−p)T
-
     # initializing gradient variables
     dldb = np.zeros((Y.shape[0], 1))
     dldw = np.zeros(W.shape)
