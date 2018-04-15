@@ -12,15 +12,35 @@ def main():
     W = np.random.normal(0, 0.01, (am_labels, dim_img))
     b = np.random.normal(0, 0.01, (am_labels, 1))
 
-    P = evaluate_classifier(X_tr[:, 0:100], W, b)
+    #P = evaluate_classifier(X_tr[:, 0:100], W, b)
+
+    #disp_img(X_test[:, 1])
+
     #print(P)
 
     #acc = compute_accuracy(X_tr[:, 0:100], y_tr[:100], W, b)
     #print(acc)
 
-    djdw, djdb = compute_gradients(X_tr[:, 0:100], Y_tr[:, 0:100], P, W, 0.001)
+    #djdb, djdw = compute_gradients(X_tr[:, 0:100], Y_tr[:, 0:100], P, W, 0.001)
 
-    disp_img(X_test[:,1])
+    #djdb2, djdw2 = compute_grads_num_slow(X_tr[:, 0:100], Y_tr[:, 0:100], W, b, 0.001, 0.000001)
+
+    #diff_b =  djdb - djdb2
+    #diff_w = djdw - djdw2
+
+    J = compute_cost(X_tr, Y_tr, W, b, 0)
+
+    lol = 2
+
+    n_batch = 100
+    eta =.01
+    n_epochs = 20
+    lamb = 0
+
+    Wstar, bstar = mini_batch_GD(X_tr, X_val, Y_tr, Y_val, n_batch, eta, n_epochs, W, b, lamb)
+
+    lol = 0
+
 
 
 if __name__ == "__main__":
