@@ -12,35 +12,23 @@ def main():
     W = np.random.normal(0, 0.01, (am_labels, dim_img))
     b = np.random.normal(0, 0.01, (am_labels, 1))
 
-    #P = evaluate_classifier(X_tr[:, 0:100], W, b)
+    acc_before = compute_accuracy(X_test, y_test, W, b)
+    print("Accuracy with random: ", acc_before)
 
-    #disp_img(X_test[:, 1])
-
-    #print(P)
-
-    #acc = compute_accuracy(X_tr[:, 0:100], y_tr[:100], W, b)
-    #print(acc)
-
-    #djdb, djdw = compute_gradients(X_tr[:, 0:100], Y_tr[:, 0:100], P, W, 0.001)
-
-    #djdb2, djdw2 = compute_grads_num_slow(X_tr[:, 0:100], Y_tr[:, 0:100], W, b, 0.001, 0.000001)
-
-    #diff_b =  djdb - djdb2
-    #diff_w = djdw - djdw2
-
-    J = compute_cost(X_tr, Y_tr, W, b, 0)
-
-    lol = 2
-
+    lamb = 1
+    n_epochs = 40
     n_batch = 100
     eta =.01
-    n_epochs = 20
-    lamb = 0
 
     Wstar, bstar = mini_batch_GD(X_tr, X_val, Y_tr, Y_val, n_batch, eta, n_epochs, W, b, lamb)
 
-    lol = 0
+    acc = compute_accuracy(X_test, y_test, Wstar, bstar)
+    print("Accuracy after training: ", acc)
 
+    for row in range(Wstar.shape[0]):
+        W_row = Wstar[row, :]
+        W_row = ((W_row - np.min(W_row)) / (np.max(W_row) - np.min(W_row)))
+        disp_img(W_row)
 
 
 if __name__ == "__main__":
