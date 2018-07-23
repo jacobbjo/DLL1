@@ -1,2 +1,2 @@
-# DLL1
-DL Lab1
+# DL course
+DL Labs
