@@ -20,7 +20,6 @@ def main():
 
     W, b = get_parameters(dim_img, am_labels, am_nodes)
 
-
     P = evaluate_classifier(X_tr[:, 0:100], W, b)
 
     #disp_img(X_test[:, 1])
