@@ -23,6 +23,21 @@ def readfile(file):
     return np.transpose(data/255), one_hots, np.array(labels)
 
 
+def get_parameters(dim_img, am_labels, am_nodes):
+    W = []
+    b = []
+
+    am_nodes.insert(0, dim_img)
+    am_nodes.append(am_labels)
+
+    for i in range(len(am_nodes)-1):
+        # Xavier initialization from lecture notes
+        W.append(np.random.normal(0, (1/np.sqrt(dim_img)), (am_nodes[i+1], am_nodes[i])))
+        b.append(np.zeros((am_nodes[i+1], 1)))
+
+    return [W, b]
+
+
 def softmax(s):
     return np.exp(s)/np.sum(np.exp(s), axis=0)
 

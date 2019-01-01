@@ -1,4 +1,4 @@
-from L1.functions import *
+from L2.functions import *
 
 def main():
     am_labels = 10
@@ -6,11 +6,20 @@ def main():
     X_val, Y_val, y_val = readfile("../Datasets/data_batch_2")
     X_test, Y_test, y_test = readfile("../Datasets/test_batch")
 
+    mean_x = np.mean(X_tr, axis=1)
+
+    mean_x = np.reshape(mean_x, (-1, 1))
+
+    X_tr -= mean_x
+    X_val -= mean_x
+    X_test -= mean_x
+
+    am_nodes = [50] # number of nodes for the hidden layers
+
     dim_img = len(X_val)
 
+    W, b = get_parameters(dim_img, am_labels, am_nodes)
 
-    W = np.random.normal(0, 0.01, (am_labels, dim_img))
-    b = np.random.normal(0, 0.01, (am_labels, 1))
 
     P = evaluate_classifier(X_tr[:, 0:100], W, b)
 
