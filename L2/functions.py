@@ -43,9 +43,16 @@ def softmax(s):
 
 
 def evaluate_classifier(X, W, b):
-    s = np.matmul(W, X) + b
+    activations = [X]
+
+    for i in range(len(W)):
+        s = np.matmul(W[i], activations[-1]) + b[i]
+        x = np.maximum(0, s)
+
+        activations.append(x)
+
     P = softmax(s)
-    return P
+    return [P, activations]
 
 
 def compute_cost(X, Y, W, b, lamb):
@@ -73,28 +80,43 @@ def compute_accuracy(X, y, W, b):
     return are_equal/preds.shape[0]
 
 
-def compute_gradients(X, Y, P, W, lamb):
-    # initializing gradient variables
-    dldb = np.zeros((Y.shape[0], 1))
-    dldw = np.zeros(W.shape)
+def compute_gradients(X, Y, P, H, W, lamb):
+    dldb = []
+    dldw = []
+
+    for i in range(len(W)):
+
+        # Initialize
+        dldb.append(np.zeros((W[i].shape[0], 1)))
+        dldw.append(np.zeros(W[i].shape))
 
     g = -np.transpose(Y - P)
 
-    dldb = np.sum(g, axis=0)
+    for i in reversed(range(len(W))):
+        gNew = np.zeros((X.shape[1], W[i-1].shape[0]))
 
-    for ind, picture in enumerate(X.T):
-        gpart = g[ind, :].reshape(-1, 1)
-        add = np.matmul(gpart, picture.reshape(-1, 1).T)
-        dldw += add
+        for ind, picture in enumerate(X.T):
 
-    dldb = dldb/X.shape[1]
-    dldw = dldw/X.shape[1]
+            gpart = g[ind, :].reshape(-1, 1)
+            hpart = H[i][:, ind].reshape(-1, 1)
 
+            dldb[i] += gpart
+            dldw[i] += np.transpose(np.matmul(hpart, np.transpose(gpart)))
 
-    djdw = dldw + 2 * lamb * W
-    djdb = dldb.reshape(-1, 1)
+            if i > 0:
+                ind_fun = np.where(hpart > 0, 1, 0).reshape(-1, 1)
 
-    return djdb, djdw
+                gTemp = np.matmul(gpart.T, W[i])
+                gNew[ind, :] = np.multiply(gTemp.T, ind_fun).T
+
+        g = gNew.copy()
+
+        dldb[i] /= X.shape[1]
+        dldw[i] /= X.shape[1]
+
+        dldw[i] += (2 * lamb * W[i])
+
+    return dldb, dldw
 
 
 

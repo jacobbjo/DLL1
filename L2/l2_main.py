@@ -14,13 +14,13 @@ def main():
     X_val -= mean_x
     X_test -= mean_x
 
-    am_nodes = [50] # number of nodes for the hidden layers
+    am_nodes = [50]  # number of nodes for the hidden layers
 
     dim_img = len(X_val)
 
     W, b = get_parameters(dim_img, am_labels, am_nodes)
 
-    P = evaluate_classifier(X_tr[:, 0:100], W, b)
+    P, H = evaluate_classifier(X_tr[:, 0:100], W, b)
 
     #disp_img(X_test[:, 1])
 
@@ -29,7 +29,7 @@ def main():
     #acc = compute_accuracy(X_tr[:, 0:100], y_tr[:100], W, b)
     #print(acc)
 
-    djdb, djdw = compute_gradients(X_tr[:, 0:100], Y_tr[:, 0:100], P, W, 0.001)
+    djdb, djdw = compute_gradients(X_tr[:, 0:100], Y_tr[:, 0:100], P, H, W, 0.001)
 
     djdb2, djdw2 = compute_grads_num_slow(X_tr[:, 0:100], Y_tr[:, 0:100], W, b, 0.001, 0.000001)
 
