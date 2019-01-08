@@ -119,7 +119,6 @@ def compute_gradients(X, Y, P, H, W, lamb):
     return dldb, dldw
 
 
-
 def disp_img(image):
     plt.imshow(np.transpose(image.reshape(3, 32, 32), (1, 2, 0)))
     plt.show()
