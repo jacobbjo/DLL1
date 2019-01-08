@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from pathlib import Path
 
 
 def unpickle(file):
@@ -22,6 +23,36 @@ def readfile(file):
 
     return np.transpose(data/255), one_hots, np.array(labels)
 
+
+def save_mats(mat_list, name, folder):
+    for i in range(len(mat_list)):
+        file_path = folder + "/" + name + "_" + str(i)
+        np.savetxt(file_path, mat_list[i])
+
+
+def load_mats(name, folder):
+    mat_list = []
+
+    i = 0
+    while True:
+        file_path_str = folder + "/" + name + "_" + str(i)
+        file_path = Path(file_path_str)
+
+        if not file_path.is_file():
+            print("load_mats:  \"" + file_path_str + "\" is not found, breaking.")
+            break
+
+        mat = np.loadtxt(file_path_str)
+        if mat.ndim < 2:
+            # fixing shape of vectors
+            #print("fixing mat shape for: " + name + "_" + str(i))
+            mat = mat.reshape(-1, 1)
+
+        mat_list.append(mat)
+
+        i += 1
+
+    return mat_list
 
 def get_parameters(dim_img, am_labels, am_nodes):
     W = []
@@ -59,7 +90,7 @@ def compute_cost(X, Y, W, b, lamb):
     """the sum of the loss of the network’s predictions for the images in X relative to
     the ground truth labels and the regularization term on W"""
 
-    P = evaluate_classifier(X, W, b)
+    P = evaluate_classifier(X, W, b)[0]
     YP = Y*P
     YP_log_sum = 0
 
@@ -69,7 +100,11 @@ def compute_cost(X, Y, W, b, lamb):
                 YP_log_sum += np.log(YP[r, c])
 
     cross = -1/X.shape[1] * YP_log_sum
-    J = cross + lamb * np.sum(np.power(W, 2))
+    J = cross
+
+    for hl in range(len(W)):
+        J += lamb * np.sum(np.power(W[hl], 2))
+
     return J
 
 
@@ -125,34 +160,40 @@ def disp_img(image):
 
 
 def compute_grads_num_slow(X, Y, W, b, lamb, h):
-    no = W.shape[0]
-    d = X.shape[0]
 
-    grad_W = np.zeros(W.shape)
-    grad_b = np.zeros((no, 1))
+    grad_b = []
+    grad_W = []
 
-    for i in range(b.shape[0]):
-        b_try = np.copy(b)
-        b_try[i] = b_try[i] - h
-        c1 = compute_cost(X, Y, W, b_try, lamb)
+    for i in range(len(W)):
+        # Initialize
+        grad_b.append(np.zeros(b[i].shape))
+        grad_W.append(np.zeros(W[i].shape))
 
-        b_try = np.copy(b)
-        b_try[i] = b_try[i] + h
-        c2 = compute_cost(X, Y, W, b_try, lamb)
+    for hl in range(len(W)): #for every hidden layer
 
-        grad_b[i] = ((c2 - c1) / (2 * h))
+        for i in range(b[hl].shape[0]):
+            b_try = b[:]
+            b_try[hl][i] = b_try[hl][i] - h
+            c1 = compute_cost(X, Y, W, b_try, lamb)
 
-    for i in range(W.shape[0]):
-        for j in range(W.shape[1]):
-            W_try = np.copy(W)
-            W_try[i, j] = W_try[i, j] - h
-            c1 = compute_cost(X, Y, W_try, b, lamb)
+            b_try = b[:]
+            b_try[hl][i] = b_try[hl][i] + h
+            c2 = compute_cost(X, Y, W, b_try, lamb)
 
-            W_try = np.copy(W)
-            W_try[i, j] = W_try[i, j] + h
-            c2 = compute_cost(X, Y, W_try, b, lamb)
+            grad_b[hl][i] = ((c2 - c1) / (2 * h))
 
-            grad_W[i, j] = ((c2 - c1) / (2 * h))
+        for i in range(W[hl].shape[0]):
+            print("W loop, i: ", i)
+            for j in range(W[hl].shape[1]):
+                W_try = W[:]
+                W_try[hl][i, j] = W_try[hl][i, j] - h
+                c1 = compute_cost(X, Y, W_try, b, lamb)
+
+                W_try = W[:]
+                W_try[hl][i, j] = W_try[hl][i, j] + h
+                c2 = compute_cost(X, Y, W_try, b, lamb)
+
+                grad_W[hl][i, j] = ((c2 - c1) / (2 * h))
 
     return grad_b, grad_W
 

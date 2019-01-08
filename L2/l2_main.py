@@ -31,12 +31,24 @@ def main():
 
     djdb, djdw = compute_gradients(X_tr[:, 0:100], Y_tr[:, 0:100], P, H, W, 0.001)
 
-    djdb2, djdw2 = compute_grads_num_slow(X_tr[:, 0:100], Y_tr[:, 0:100], W, b, 0.001, 0.000001)
+    #djdb2, djdw2 = compute_grads_num_slow(X_tr[:, 0:100], Y_tr[:, 0:100], W, b, 0.001, 0.000001)
+    #save_mats(djdb2, "djdb2", "mats")
+    #save_mats(djdw2, "djdw2", "mats")
 
-    diff_b =  djdb - djdb2
-    diff_w = djdw - djdw2
+    djdb2 = load_mats("djdb2", "mats")
+    djdw2 = load_mats("djdw2", "mats")
 
-    wsum = np.sum(np.abs(diff_w)) / W.size
+    for lay in range(len(am_nodes) - 1):
+        print("lay: " + str(lay))
+        diff_b = djdb[lay] - djdb2[lay]
+        diff_w = djdw[lay] - djdw2[lay]
+
+
+        bsum = np.sum(np.abs(diff_b)) / b[lay].size
+        wsum = np.sum(np.abs(diff_w)) / W[lay].size
+
+        print("bsum: ", bsum)
+        print("wsum: ", wsum)
 
     #J = compute_cost(X_tr, Y_tr, W, b, 0)
 
