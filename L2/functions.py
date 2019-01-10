@@ -54,17 +54,19 @@ def load_mats(name, folder):
 
     return mat_list
 
-def get_parameters(dim_img, am_labels, am_nodes):
+def get_parameters(dim_img, am_labels, am_nodes, seed):
     W = []
     b = []
 
-    am_nodes.insert(0, dim_img)
-    am_nodes.append(am_labels)
+    loop_nodes = am_nodes[:]
+    loop_nodes.insert(0, dim_img)
+    loop_nodes.append(am_labels)
 
-    for i in range(len(am_nodes)-1):
+    for i in range(len(loop_nodes)-1):
         # Xavier initialization from lecture notes
-        W.append(np.random.normal(0, (1/np.sqrt(dim_img)), (am_nodes[i+1], am_nodes[i])))
-        b.append(np.zeros((am_nodes[i+1], 1)))
+        np.random.seed(seed)
+        W.append(np.random.normal(0, (1/np.sqrt(dim_img)), (loop_nodes[i+1], loop_nodes[i])))
+        b.append(np.zeros((loop_nodes[i+1], 1)))
 
     return [W, b]
 
@@ -109,7 +111,7 @@ def compute_cost(X, Y, W, b, lamb):
 
 
 def compute_accuracy(X, y, W, b):
-    P = evaluate_classifier(X, W, b)
+    P = evaluate_classifier(X, W, b)[0]
     preds = np.argmax(P, axis=0) #the predicted class for each picture
     are_equal = np.sum(preds == y)
     return are_equal/preds.shape[0]
@@ -197,10 +199,10 @@ def compute_grads_num_slow(X, Y, W, b, lamb, h):
 
     return grad_b, grad_W
 
+
 def mini_batch_GD(X, X_val, Y, Y_val, n_batch, eta, n_epochs, W, b, lamb):
     J_tr = []
     J_val = []
-
 
     for i in range(n_epochs):
         for j in range(int(X.shape[1]/n_batch)):
@@ -209,13 +211,12 @@ def mini_batch_GD(X, X_val, Y, Y_val, n_batch, eta, n_epochs, W, b, lamb):
             Xbatch = X[:, j_start: j_end]
             Ybatch = Y[:, j_start: j_end]
 
-            P = evaluate_classifier(Xbatch, W, b)
-            djdb, djdw = compute_gradients(Xbatch, Ybatch, P, W, lamb)
+            P, H = evaluate_classifier(Xbatch, W, b)
+            djdb, djdw = compute_gradients(Xbatch, Ybatch, P, H, W, lamb)
 
-
-            W -= djdw * eta
-            b -= djdb * eta
-
+            for hl in range(len(W)):  # for every hidden layer
+                W[hl] -= djdw[hl] * eta
+                b[hl] -= djdb[hl] * eta
 
         J_tr.append(compute_cost(X, Y, W, b, lamb))
         J_val.append(compute_cost(X_val, Y_val, W, b, lamb))
@@ -224,6 +225,7 @@ def mini_batch_GD(X, X_val, Y, Y_val, n_batch, eta, n_epochs, W, b, lamb):
 
     Wstar = W
     bstar = b
+
     epochs = [x + 1 for x in range(n_epochs)]
     plt.plot(epochs, J_tr, label="Training")
     plt.plot(epochs, J_val, label="Validation")
@@ -231,6 +233,5 @@ def mini_batch_GD(X, X_val, Y, Y_val, n_batch, eta, n_epochs, W, b, lamb):
     plt.ylabel("Loss")
     plt.xlabel("Epochs")
     plt.show()
-
 
     return Wstar, bstar

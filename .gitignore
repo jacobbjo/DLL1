@@ -100,9 +100,12 @@ ENV/
 # mypy
 .mypy_cache/
 
-#dataset
-Datasets/
-
 # Pycharm
 .idea/
 P1/__init__.py
+
+# dataset
+Datasets/
+
+# saved matrices
+L2/mats/
