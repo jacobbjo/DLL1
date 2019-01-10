@@ -1,4 +1,5 @@
 from L2.functions import *
+import random
 
 def main():
     am_labels = 10
@@ -57,17 +58,41 @@ def main():
     print("Accuracy before training: ", acc_before_train)
 
     n_batch = 10
-    eta = 0.05
-    #eta = 0.005
-    n_epochs = 10
-    lamb = 0.000001
+    n_epochs = 100
     rho = 0.9
     dr = 0.95  # decay rate
 
-    Wstar, bstar = mini_batch_GD(X_tr[:, 0:100], X_val[:, 0:100], Y_tr[:, 0:100], Y_val[:, 0:100], n_batch, eta, n_epochs, W, b, lamb, rho, dr)
+    eta_upper = 0.05
+    eta_lower = 0.005
+    #eta_step = 0.0001
 
-    acc = compute_accuracy(X_test, y_test, Wstar, bstar)
-    print("Accuracy after training: ", acc)
+
+    lamb_upper = 0.000001
+    lamb_lower = 0.01
+    #lamb_step = 0.000001
+
+    pairing_tries = 100
+
+    results = np.zeros((pairing_tries, 3))
+
+    for t in range(pairing_tries):
+
+        eta = random.uniform(eta_lower, eta_upper)
+        lamb = random.uniform(lamb_lower, lamb_upper)
+
+        Wstar, bstar = mini_batch_GD(X_tr[:, 0:100], X_val[:, 0:100], Y_tr[:, 0:100], Y_val[:, 0:100], n_batch, eta, n_epochs, W, b, lamb, rho, dr)
+
+        acc = compute_accuracy(X_test, y_test, Wstar, bstar)
+
+        print("pair: " + str(t) + " acc: " + str(acc), " eta: " + str(eta) + " lamb: " + str(lamb))
+
+        results[t, :] = [acc, eta, lamb]
+
+    # Sort results based on descending accuracy
+    results = results[results[:, 0].argsort()[::-1]]
+
+    np.savetxt("results.txt", results, fmt="%1.5f")
+
 
     #for row in range(Wstar.shape[0]):
     #    W_row = Wstar[row, :]

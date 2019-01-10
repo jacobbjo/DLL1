@@ -231,20 +231,20 @@ def mini_batch_GD(X, X_val, Y, Y_val, n_batch, eta, n_epochs, W, b, lamb, rho, d
 
         J_tr.append(compute_cost(X, Y, W, b, lamb))
         J_val.append(compute_cost(X_val, Y_val, W, b, lamb))
-        print("TR Cost for epoch ", i, " is ", J_tr[i])
-        print("VAL Cost for epoch ", i, " is ", J_val[i])
+        #print("TR Cost for epoch ", i, " is ", J_tr[i])
+        #print("VAL Cost for epoch ", i, " is ", J_val[i])
 
         eta *= dr
 
     Wstar = W
     bstar = b
 
-    epochs = [x + 1 for x in range(n_epochs)]
-    plt.plot(epochs, J_tr, label="Training")
-    plt.plot(epochs, J_val, label="Validation")
-    plt.legend()
-    plt.ylabel("Loss")
-    plt.xlabel("Epochs")
-    plt.show()
+    #epochs = [x + 1 for x in range(n_epochs)]
+    #plt.plot(epochs, J_tr, label="Training")
+    #plt.plot(epochs, J_val, label="Validation")
+    #plt.legend()
+    #plt.ylabel("Loss")
+    #plt.xlabel("Epochs")
+    #plt.show()
 
     return Wstar, bstar
