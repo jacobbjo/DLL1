@@ -56,12 +56,15 @@ def main():
     acc_before_train = compute_accuracy(X_test, y_test, W, b)
     print("Accuracy before training: ", acc_before_train)
 
-    n_batch = 100
-    eta = 0.1
-    n_epochs = 200
-    lamb = 0
+    n_batch = 10
+    eta = 0.05
+    #eta = 0.005
+    n_epochs = 10
+    lamb = 0.000001
+    rho = 0.9
+    dr = 0.95  # decay rate
 
-    Wstar, bstar = mini_batch_GD(X_tr[:, 0:100], X_val[:, 0:100], Y_tr[:, 0:100], Y_val[:, 0:100], n_batch, eta, n_epochs, W, b, lamb)
+    Wstar, bstar = mini_batch_GD(X_tr[:, 0:100], X_val[:, 0:100], Y_tr[:, 0:100], Y_val[:, 0:100], n_batch, eta, n_epochs, W, b, lamb, rho, dr)
 
     acc = compute_accuracy(X_test, y_test, Wstar, bstar)
     print("Accuracy after training: ", acc)

@@ -200,9 +200,17 @@ def compute_grads_num_slow(X, Y, W, b, lamb, h):
     return grad_b, grad_W
 
 
-def mini_batch_GD(X, X_val, Y, Y_val, n_batch, eta, n_epochs, W, b, lamb):
+def mini_batch_GD(X, X_val, Y, Y_val, n_batch, eta, n_epochs, W, b, lamb, rho, dr):
     J_tr = []
     J_val = []
+
+    vb = []
+    vW = []
+
+    for i in range(len(W)):
+        # Initialize
+        vb.append(np.zeros((W[i].shape[0], 1)))
+        vW.append(np.zeros(W[i].shape))
 
     for i in range(n_epochs):
         for j in range(int(X.shape[1]/n_batch)):
@@ -215,13 +223,18 @@ def mini_batch_GD(X, X_val, Y, Y_val, n_batch, eta, n_epochs, W, b, lamb):
             djdb, djdw = compute_gradients(Xbatch, Ybatch, P, H, W, lamb)
 
             for hl in range(len(W)):  # for every hidden layer
-                W[hl] -= djdw[hl] * eta
-                b[hl] -= djdb[hl] * eta
+                vb[hl] = (vb[hl] * rho) + (eta * djdb[hl])
+                vW[hl] = (vW[hl] * rho) + (eta * djdw[hl])
+
+                b[hl] -= vb[hl]
+                W[hl] -= vW[hl]
 
         J_tr.append(compute_cost(X, Y, W, b, lamb))
         J_val.append(compute_cost(X_val, Y_val, W, b, lamb))
         print("TR Cost for epoch ", i, " is ", J_tr[i])
         print("VAL Cost for epoch ", i, " is ", J_val[i])
+
+        eta *= dr
 
     Wstar = W
     bstar = b
