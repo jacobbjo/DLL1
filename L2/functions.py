@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
+import time
 
 
 def unpickle(file):
@@ -120,6 +121,7 @@ def compute_accuracy(X, y, W, b):
 def compute_gradients(X, Y, P, H, W, lamb):
     dldb = []
     dldw = []
+    start = time.time()
 
     for i in range(len(W)):
 
@@ -132,19 +134,22 @@ def compute_gradients(X, Y, P, H, W, lamb):
     for i in reversed(range(len(W))):
         gNew = np.zeros((X.shape[1], W[i-1].shape[0]))
 
-        for ind, picture in enumerate(X.T):
+        if i > 0:
+            for ind in range(X.shape[1]):
+                gpart = g[ind, :].reshape(-1, 1)
+                hpart = H[i][:, ind].reshape(-1, 1)
 
-            gpart = g[ind, :].reshape(-1, 1)
-            hpart = H[i][:, ind].reshape(-1, 1)
+                dldb[i] += gpart
 
-            dldb[i] += gpart
-            dldw[i] += np.transpose(np.matmul(hpart, np.transpose(gpart)))
+                dldw[i] += np.matmul(gpart, hpart.T)
 
-            if i > 0:
                 ind_fun = np.where(hpart > 0, 1, 0).reshape(-1, 1)
 
                 gTemp = np.matmul(gpart.T, W[i])
                 gNew[ind, :] = np.multiply(gTemp.T, ind_fun).T
+
+        else:
+            dldw[i] += np.matmul(g.T, H[i].T)
 
         g = gNew.copy()
 
@@ -201,6 +206,9 @@ def compute_grads_num_slow(X, Y, W, b, lamb, h):
 
 
 def mini_batch_GD(X, X_val, Y, Y_val, n_batch, eta, n_epochs, W, b, lamb, rho, dr):
+
+    int_cost = compute_cost(X, Y, W, b, lamb)
+
     J_tr = []
     J_val = []
 
@@ -220,6 +228,7 @@ def mini_batch_GD(X, X_val, Y, Y_val, n_batch, eta, n_epochs, W, b, lamb, rho, d
             Ybatch = Y[:, j_start: j_end]
 
             P, H = evaluate_classifier(Xbatch, W, b)
+
             djdb, djdw = compute_gradients(Xbatch, Ybatch, P, H, W, lamb)
 
             for hl in range(len(W)):  # for every hidden layer
@@ -231,20 +240,26 @@ def mini_batch_GD(X, X_val, Y, Y_val, n_batch, eta, n_epochs, W, b, lamb, rho, d
 
         J_tr.append(compute_cost(X, Y, W, b, lamb))
         J_val.append(compute_cost(X_val, Y_val, W, b, lamb))
+
         #print("TR Cost for epoch ", i, " is ", J_tr[i])
         #print("VAL Cost for epoch ", i, " is ", J_val[i])
+        print("    Epoch ", i, " TR: ", J_tr[i], " VAL: ", J_val[i])
+
+        if J_tr[-1] > 3* int_cost:
+            print("J_tr[-1] > 3* int_cost")
+            break
 
         eta *= dr
 
     Wstar = W
     bstar = b
 
-    #epochs = [x + 1 for x in range(n_epochs)]
-    #plt.plot(epochs, J_tr, label="Training")
-    #plt.plot(epochs, J_val, label="Validation")
-    #plt.legend()
-    #plt.ylabel("Loss")
-    #plt.xlabel("Epochs")
-    #plt.show()
+    epochs = [x + 1 for x in range(n_epochs)]
+    plt.plot(epochs, J_tr, label="Training")
+    plt.plot(epochs, J_val, label="Validation")
+    plt.legend()
+    plt.ylabel("Loss")
+    plt.xlabel("Epochs")
+    plt.show()
 
     return Wstar, bstar
