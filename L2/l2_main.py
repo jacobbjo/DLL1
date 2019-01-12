@@ -115,8 +115,11 @@ def main():
     n_epochs = 30
     rho = 0.9
     dr = 0.95  # decay rate
-    eta = 0.00560
-    lamb = 0.00541
+    #eta = 0.0056
+    #lamb = 0.00541
+    eta = 0.00614
+    lamb = 0.00590
+
 
     Wstar, bstar = mini_batch_GD(X_tr, X_val, Y_tr, Y_val, n_batch, eta, n_epochs, W, b, lamb, rho, dr)
 
