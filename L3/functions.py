@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 
-
 def unpickle(file):
     import pickle
     with open(file, 'rb') as fo:
@@ -124,8 +123,15 @@ def evaluate_classifier_batch_norm(X, W, b, M=[], V=[]):
 
     for i in range(len(W)):
         # score
-        s = np.matmul(W[i], activations[-1]) + b[i]
+        mattis = np.matmul(W[i], activations[-1])
+        s = mattis + b[i]
+        kurt = mattis - b[i]
+        bulle = s-kurt
+
+
         S.append(s)
+        if i > 0:
+            sssnopp = S[-1]
 
         if calc_mean_var:
             # mean
@@ -151,15 +157,15 @@ def evaluate_classifier_batch_norm(X, W, b, M=[], V=[]):
         x = np.maximum(0, s_n)
         activations.append(x)
 
-    P = softmax(s)
+    P = softmax(S[-1])
     return [P, activations, S, M, V]
 
 
 def batch_norm(s, m, v):
-    return (s-m)/np.sqrt(v + 0.0000001)  # small epsilon to not sqrt(0)
+    return (s-m)/np.sqrt(v + 0.001)  # small epsilon to not sqrt(0)
 
 
-def batch_norm_back_pass(djdshat, s, m, v):
+def batch_norm_back_pass_old(djdshat, s, m, v):
     vb = v + 0.0000001  # adding small epsilon to avoid zero division
     Vb_12 = np.diag((np.power(vb, -1/2)).reshape(-1))
     Vb_32 = np.diag((np.power(vb, -3/2)).reshape(-1))
@@ -193,7 +199,9 @@ def batch_norm_back_pass(djdshat, s, m, v):
 
 
 def compute_cost(X, Y, W, b, lamb):
+
     P = evaluate_classifier_batch_norm(X, W, b)[0]
+
     #P = evaluate_classifier(X, W, b)[0]
     YP = Y*P
     YP_log_sum = 0
@@ -274,8 +282,9 @@ def compute_gradients_batch_norm(X, Y, P, H, S, M, V, W, lamb):
     g = -np.transpose(Y - P)
 
     # Last layer (k)
-    dldb[-1] = np.sum(g, axis=1)
+    dldb[-1] = np.sum(g, axis=0)
     dldb[-1] /= X.shape[1]
+    dldb[-1] = dldb[-1].reshape(-1, 1)
 
     g_new = np.zeros((X.shape[1], W[-2].shape[0]))
 
@@ -302,7 +311,7 @@ def compute_gradients_batch_norm(X, Y, P, H, S, M, V, W, lamb):
 
         g = batch_norm_back_pass(g, S[i], M[i], V[i])
 
-        dldb[i] = np.sum(g, axis=1)
+        dldb[i] = np.sum(g, axis=0)
 
         if i > 0:
             for ind in range(X.shape[1]):
@@ -323,8 +332,9 @@ def compute_gradients_batch_norm(X, Y, P, H, S, M, V, W, lamb):
         g = g_new.copy()
 
         dldb[i] /= X.shape[1]
-        dldw[i] /= X.shape[1]
+        dldb[i] = dldb[i].reshape(-1, 1)
 
+        dldw[i] /= X.shape[1]
         dldw[i] += (2 * lamb * W[i])
 
     return dldb, dldw
@@ -348,25 +358,44 @@ def compute_grads_num_slow(X, Y, W, b, lamb, h):
     for hl in range(len(W)): #for every hidden layer
 
         for i in range(b[hl].shape[0]):
+            b_lay = np.copy(b[hl])
+            b_lay[i] = b_lay[i] - h
             b_try = b[:]
-            b_try[hl][i] = b_try[hl][i] - h
+            b_try[hl] = b_lay
             c1 = compute_cost(X, Y, W, b_try, lamb)
 
+            b_lay = np.copy(b[hl])
+            b_lay[i] = b_lay[i] + h
             b_try = b[:]
-            b_try[hl][i] = b_try[hl][i] + h
+            b_try[hl] = b_lay
             c2 = compute_cost(X, Y, W, b_try, lamb)
+
+
+            subt = c2-c1
 
             grad_b[hl][i] = ((c2 - c1) / (2 * h))
 
         for i in range(W[hl].shape[0]):
             print("W loop, i: ", i)
             for j in range(W[hl].shape[1]):
+
+                W_lay = np.copy(W[hl])
+                W_lay[i, j] = W_lay[i, j] - h
                 W_try = W[:]
-                W_try[hl][i, j] = W_try[hl][i, j] - h
+                W_try[hl] = W_lay
+
+                #W_try = W[:]
+                #W_try[hl][i, j] = W_try[hl][i, j] - h
                 c1 = compute_cost(X, Y, W_try, b, lamb)
 
+                #W_try = W[:]
+                #W_try[hl][i, j] = W_try[hl][i, j] + h
+
+                W_lay = np.copy(W[hl])
+                W_lay[i, j] = W_lay[i, j] + h
                 W_try = W[:]
-                W_try[hl][i, j] = W_try[hl][i, j] + h
+                W_try[hl] = W_lay
+
                 c2 = compute_cost(X, Y, W_try, b, lamb)
 
                 grad_W[hl][i, j] = ((c2 - c1) / (2 * h))

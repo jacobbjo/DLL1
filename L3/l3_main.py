@@ -32,7 +32,7 @@ def main():
 
     X_test, Y_test, y_test = readfile("../Datasets/test_batch")
 
-    LOAD = False
+    LOAD = True
 
     mean_x = np.mean(X_tr, axis=1)
 
@@ -46,23 +46,26 @@ def main():
 
     dim_img = len(X_val)
 
-    W, b = get_parameters_he(dim_img, am_labels, am_nodes, 1337)
+    #W, b = get_parameters_he(dim_img, am_labels, am_nodes, 1337)
 
-    P, H, S, M, V= evaluate_classifier_batch_norm(X_tr[:, 0:100], W, b)
+    W = load_mats("parameters_50_weights", "mats")
+    b = load_mats("parameters_50_bias", "mats")
 
-    djdb, djdw = compute_gradients_batch_norm(X_tr[:, 0:100], Y_tr[:, 0:100], P, H, S, M, V, W, 0.001)
+    P, H, S, M, V = evaluate_classifier_batch_norm(X_tr[:, 0:100], W, b)
+
+    djdb, djdw = compute_gradients_batch_norm(X_tr[:, 0:100], Y_tr[:, 0:100], P, H, S, M, V, W, 0)
 
     #djdb, djdw = compute_gradients(X_tr[:, 0:100], Y_tr[:, 0:100], P, H, W, 0.001)
 
     print("lol")
 
     if LOAD:
-        djdb2 = load_mats("djdb2_50", "mats")
-        djdw2 = load_mats("djdw2_50", "mats")
+        djdb2 = load_mats("djdb2_50_medjo2", "mats")
+        djdw2 = load_mats("djdw2_50_medjo2", "mats")
     else:
-        djdb2, djdw2 = compute_grads_num_slow(X_tr[:, 0:100], Y_tr[:, 0:100], W, b, 0.001, 0.00001)
-        save_mats(djdb2, "djdb2_50", "mats")
-        save_mats(djdw2, "djdw2_50", "mats")
+        djdb2, djdw2 = compute_grads_num_slow(X_tr[:, 0:100], Y_tr[:, 0:100], W, b, 0, 0.000001)
+        save_mats(djdb2, "djdb2_50_medjo2", "mats")
+        save_mats(djdw2, "djdw2_50_medjo2", "mats")
 
     for lay in range(len(am_nodes) + 1):
         print("lay: " + str(lay))
