@@ -109,11 +109,92 @@ def evaluate_classifier(X, W, b):
     return [P, activations]
 
 
-def compute_cost(X, Y, W, b, lamb):
-    """the sum of the loss of the network’s predictions for the images in X relative to
-    the ground truth labels and the regularization term on W"""
+def evaluate_classifier_batch_norm(X, W, b, M=[], V=[]):
+    calc_mean_var = False
 
-    P = evaluate_classifier(X, W, b)[0]
+    if not (len(M) > 0 and len(V) > 0):
+        M = []
+        V = []
+        calc_mean_var = True
+        #print("Not using mean and variance input in evaluate_classifier_batch!")
+
+    S = []
+    S_N = []
+    activations = [X]
+
+    for i in range(len(W)):
+        # score
+        s = np.matmul(W[i], activations[-1]) + b[i]
+        S.append(s)
+
+        if calc_mean_var:
+            # mean
+            m = np.mean(s, axis=1).reshape(-1, 1)
+            M.append(m)
+
+            # variance
+            v = np.mean(np.power((s-m), 2), axis=1).reshape(-1, 1)
+            V.append(v)
+
+        else:
+            # mean
+            m = M[i]
+
+            # variance
+            v = V[i]
+
+        # normalized score
+        s_n = batch_norm(s, m, v)
+        S_N.append(s_n)
+
+        # activation
+        x = np.maximum(0, s_n)
+        activations.append(x)
+
+    P = softmax(s)
+    return [P, activations, S, M, V]
+
+
+def batch_norm(s, m, v):
+    return (s-m)/np.sqrt(v + 0.0000001)  # small epsilon to not sqrt(0)
+
+
+def batch_norm_back_pass(djdshat, s, m, v):
+    vb = v + 0.0000001  # adding small epsilon to avoid zero division
+    Vb_12 = np.diag((np.power(vb, -1/2)).reshape(-1))
+    Vb_32 = np.diag((np.power(vb, -3/2)).reshape(-1))
+
+    n = s.shape[1]
+
+    djdvb = np.zeros((1, s.shape[0]))
+    djdmy = np.zeros((1, s.shape[0]))
+
+    for i in range(n):
+        score_diag = np.diag((s[:, i].reshape(-1, 1) - m).reshape(-1))
+        temp_prod = np.matmul(djdshat[i, :].reshape(1, -1), Vb_32)
+        djdvb += np.matmul(temp_prod, score_diag)
+
+        djdmy += np.matmul(s[:, i].reshape(1, -1), Vb_12)
+
+    djdvb *= (-1/2)
+    djdmy *= (-1)
+
+    djds = np.zeros(djdshat.shape)
+
+    for i in range(n):
+        score_diag = np.diag((s[:, i].reshape(-1, 1) - m).reshape(-1))
+        part_1 = np.matmul(djdshat[i, :].reshape(1, -1), Vb_12)
+        part_2 = (2/n) * np.matmul(djdvb, score_diag)
+        part_3 = djdmy * (1/n)
+
+        djds[i, :] = part_1 + part_2 + part_3
+
+    return djds
+
+
+def compute_cost(X, Y, W, b, lamb):
+    P = evaluate_classifier_batch_norm(X, W, b)[0]
+    #P = evaluate_classifier(X, W, b)[0]
     YP = Y*P
     YP_log_sum = 0
 
@@ -171,6 +252,75 @@ def compute_gradients(X, Y, P, H, W, lamb):
             dldw[i] += np.matmul(g.T, H[i].T)
 
         g = gNew.copy()
+
+        dldb[i] /= X.shape[1]
+        dldw[i] /= X.shape[1]
+
+        dldw[i] += (2 * lamb * W[i])
+
+    return dldb, dldw
+
+
+def compute_gradients_batch_norm(X, Y, P, H, S, M, V, W, lamb):
+    dldb = []
+    dldw = []
+
+    for i in range(len(W)):
+
+        # Initialize
+        dldb.append(np.zeros((W[i].shape[0], 1)))
+        dldw.append(np.zeros(W[i].shape))
+
+    g = -np.transpose(Y - P)
+
+    # Last layer (k)
+    dldb[-1] = np.sum(g, axis=1)
+    dldb[-1] /= X.shape[1]
+
+    g_new = np.zeros((X.shape[1], W[-2].shape[0]))
+
+    for ind in range(X.shape[1]):
+        gpart = g[ind, :].reshape(-1, 1)
+        hpart = H[-2][:, ind].reshape(-1, 1)
+
+        # eq 20 from assignment
+        dldw[-1] += np.matmul(gpart, hpart.T)
+
+        # eq 21 and 22 from assignment
+        g_temp = np.matmul(gpart.T, W[-1])
+        ind_fun = np.where(hpart > 0, 1, 0).reshape(-1, 1)
+        g_new[ind, :] = np.matmul(g_temp, ind_fun)
+
+    dldw[-1] /= X.shape[1]
+    dldw[-1] += (2 * lamb * W[-1])
+
+    g = g_new.copy()
+
+    # Layers = k − 1, . . . , 1
+    for i in reversed(range(len(W)-1)):
+        g_new = np.zeros((X.shape[1], W[i-1].shape[0]))
+
+        g = batch_norm_back_pass(g, S[i], M[i], V[i])
+
+        dldb[i] = np.sum(g, axis=1)
+
+        if i > 0:
+            for ind in range(X.shape[1]):
+                gpart = g[ind, :].reshape(-1, 1)
+                hpart = H[i][:, ind].reshape(-1, 1)
+                #hpart = H[i-1][:, ind].reshape(-1, 1)
+
+                dldw[i] += np.matmul(gpart, hpart.T)
+
+                ind_fun = np.where(hpart > 0, 1, 0).reshape(-1, 1)
+
+                g_temp = np.matmul(gpart.T, W[i])
+                g_new[ind, :] = np.matmul(g_temp, ind_fun)
+
+        else:
+            dldw[i] += np.matmul(g.T, H[i].T)
+
+        g = g_new.copy()
 
         dldb[i] /= X.shape[1]
         dldw[i] /= X.shape[1]

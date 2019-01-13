@@ -42,39 +42,42 @@ def main():
     X_val -= mean_x
     X_test -= mean_x
 
-    am_nodes = [50, 30]  # number of nodes for the hidden layers
+    am_nodes = [50]  # number of nodes for the hidden layers
 
     dim_img = len(X_val)
 
     W, b = get_parameters_he(dim_img, am_labels, am_nodes, 1337)
 
-#    P, H = evaluate_classifier(X_tr[:, 0:100], W, b)
+    P, H, S, M, V= evaluate_classifier_batch_norm(X_tr[:, 0:100], W, b)
 
-#    djdb, djdw = compute_gradients(X_tr[:, 0:100], Y_tr[:, 0:100], P, H, W, 0.001)
+    djdb, djdw = compute_gradients_batch_norm(X_tr[:, 0:100], Y_tr[:, 0:100], P, H, S, M, V, W, 0.001)
 
-#    if LOAD:
-#        djdb2 = load_mats("djdb2", "mats")
-#        djdw2 = load_mats("djdw2", "mats")
-#    else:
-#        djdb2, djdw2 = compute_grads_num_slow(X_tr[:, 0:100], Y_tr[:, 0:100], W, b, 0.001, 0.00001)
-#        save_mats(djdb2, "djdb2", "mats")
-#        save_mats(djdw2, "djdw2", "mats")
-#
-#    for lay in range(len(am_nodes) + 1):
-#        print("lay: " + str(lay))
-#        diff_b = djdb[lay] - djdb2[lay]
-#        diff_w = djdw[lay] - djdw2[lay]
-#
-#
-#        bsum = np.sum(np.abs(diff_b)) / b[lay].size
-#        wsum = np.sum(np.abs(diff_w)) / W[lay].size
-#
-#        print("bsum: ", bsum)
-#        print("wsum: ", wsum)
-#
-#
-#    acc_before_train = compute_accuracy(X_test, y_test, W, b)
-#    print("Accuracy before training: ", acc_before_train)
+    #djdb, djdw = compute_gradients(X_tr[:, 0:100], Y_tr[:, 0:100], P, H, W, 0.001)
+
+    print("lol")
+
+    if LOAD:
+        djdb2 = load_mats("djdb2_50", "mats")
+        djdw2 = load_mats("djdw2_50", "mats")
+    else:
+        djdb2, djdw2 = compute_grads_num_slow(X_tr[:, 0:100], Y_tr[:, 0:100], W, b, 0.001, 0.00001)
+        save_mats(djdb2, "djdb2_50", "mats")
+        save_mats(djdw2, "djdw2_50", "mats")
+
+    for lay in range(len(am_nodes) + 1):
+        print("lay: " + str(lay))
+        diff_b = djdb[lay] - djdb2[lay]
+        diff_w = djdw[lay] - djdw2[lay]
+
+        bsum = np.sum(np.abs(diff_b)) / b[lay].size
+        wsum = np.sum(np.abs(diff_w)) / W[lay].size
+
+        print("bsum: ", bsum)
+        print("wsum: ", wsum)
+
+
+    acc_before_train = compute_accuracy(X_test, y_test, W, b)
+    print("Accuracy before training: ", acc_before_train)
 
 
 ### FINDING PAIRS
@@ -116,19 +119,19 @@ def main():
 
 ### FINAL NETWORK STUFF
 
-    n_batch = 10
-    n_epochs = 150
-    rho = 0.9
-    dr = 0.95  # decay rate
-    eta = 0.01
-    lamb = 0
-
-
-    Wstar, bstar = mini_batch_GD(X_tr[:, 0:100], X_val[:, 0:100], Y_tr[:, 0:100], Y_val[:, 0:100], n_batch, eta, n_epochs, W, b, lamb, rho, dr)
-
-    acc = compute_accuracy(X_test, y_test, Wstar, bstar)
-
-    print("Accuracy after training: ", acc)
+#    n_batch = 10
+#    n_epochs = 150
+#    rho = 0.9
+#    dr = 0.95  # decay rate
+#    eta = 0.01
+#    lamb = 0
+#
+#
+#    Wstar, bstar = mini_batch_GD(X_tr[:, 0:100], X_val[:, 0:100], Y_tr[:, 0:100], Y_val[:, 0:100], n_batch, eta, n_epochs, W, b, lamb, rho, dr)
+#
+#    acc = compute_accuracy(X_test, y_test, Wstar, bstar)
+#
+#    print("Accuracy after training: ", acc)
 
 
 
