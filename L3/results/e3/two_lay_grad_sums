@@ -1,0 +1,12 @@
+load_mats:  "mats/parameters_50_weights_2" is not found, breaking.
+load_mats:  "mats/parameters_50_bias_2" is not found, breaking.
+lol
+load_mats:  "mats/djdb2_50_medjo2_2" is not found, breaking.
+load_mats:  "mats/djdw2_50_medjo2_2" is not found, breaking.
+lay: 0
+bsum:  0.7308276954541816
+wsum:  0.038535194861455346
+lay: 1
+bsum:  3.562231390939752e-10
+wsum:  2.7771009232535096e-10
+Accuracy before training:  0.1214

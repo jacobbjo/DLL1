@@ -42,14 +42,14 @@ def main():
     X_val -= mean_x
     X_test -= mean_x
 
-    am_nodes = [50]  # number of nodes for the hidden layers
+    am_nodes = [50, 30]  # number of nodes for the hidden layers
 
     dim_img = len(X_val)
 
-    #W, b = get_parameters_he(dim_img, am_labels, am_nodes, 1337)
+    W, b = get_parameters_he(dim_img, am_labels, am_nodes, 1337)
 
-    W = load_mats("parameters_50_weights", "mats")
-    b = load_mats("parameters_50_bias", "mats")
+    #W = load_mats("parameters_50_weights", "mats")
+    #b = load_mats("parameters_50_bias", "mats")
 
     P, H, S, M, V = evaluate_classifier_batch_norm(X_tr[:, 0:100], W, b)
 
@@ -60,12 +60,12 @@ def main():
     print("lol")
 
     if LOAD:
-        djdb2 = load_mats("djdb2_50_medjo2", "mats")
-        djdw2 = load_mats("djdw2_50_medjo2", "mats")
+        djdb2 = load_mats("djdb2_50_30", "mats")
+        djdw2 = load_mats("djdw2_50_30", "mats")
     else:
         djdb2, djdw2 = compute_grads_num_slow(X_tr[:, 0:100], Y_tr[:, 0:100], W, b, 0, 0.000001)
-        save_mats(djdb2, "djdb2_50_medjo2", "mats")
-        save_mats(djdw2, "djdw2_50_medjo2", "mats")
+        save_mats(djdb2, "djdb2_50_30", "mats")
+        save_mats(djdw2, "djdw2_50_30", "mats")
 
     for lay in range(len(am_nodes) + 1):
         print("lay: " + str(lay))
@@ -79,7 +79,7 @@ def main():
         print("wsum: ", wsum)
 
 
-    acc_before_train = compute_accuracy(X_test, y_test, W, b)
+    acc_before_train = compute_accuracy(X_test, y_test, W, b, M, V)
     print("Accuracy before training: ", acc_before_train)
 
 
@@ -130,9 +130,9 @@ def main():
 #    lamb = 0
 #
 #
-#    Wstar, bstar = mini_batch_GD(X_tr[:, 0:100], X_val[:, 0:100], Y_tr[:, 0:100], Y_val[:, 0:100], n_batch, eta, n_epochs, W, b, lamb, rho, dr)
+#    Wstar, bstar, move_mean, move_vari = mini_batch_GD_batch_norm(X_tr[:, 0:100], X_val[:, 0:100], Y_tr[:, 0:100], Y_val[:, 0:100], n_batch, eta, n_epochs, W, b, lamb, rho, dr)
 #
-#    acc = compute_accuracy(X_test, y_test, Wstar, bstar)
+#    acc = compute_accuracy_batch_norm(X_test, y_test, Wstar, bstar, move_mean, move_vari)
 #
 #    print("Accuracy after training: ", acc)
 

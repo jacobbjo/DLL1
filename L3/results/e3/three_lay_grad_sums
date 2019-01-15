@@ -1,0 +1,16 @@
+/usr/bin/python3.6 /home/jacob/Documents/Skola/DLL1/L3/l3_main.py
+lol
+load_mats:  "mats/djdb2_50_30_3" is not found, breaking.
+load_mats:  "mats/djdw2_50_30_3" is not found, breaking.
+lay: 0
+bsum:  1.8722961820248367
+wsum:  0.4523094008201387
+lay: 1
+bsum:  0.9005574760162284
+wsum:  0.3743627821915746
+lay: 2
+bsum:  5.959717519835039e-10
+wsum:  3.4460130332524226e-10
+Accuracy before training:  0.0981
+
+Process finished with exit code 0

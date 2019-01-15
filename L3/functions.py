@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.matlib as npm
 from pathlib import Path
+
 
 def unpickle(file):
     import pickle
@@ -123,15 +125,8 @@ def evaluate_classifier_batch_norm(X, W, b, M=[], V=[]):
 
     for i in range(len(W)):
         # score
-        mattis = np.matmul(W[i], activations[-1])
-        s = mattis + b[i]
-        kurt = mattis - b[i]
-        bulle = s-kurt
-
-
+        s = np.matmul(W[i], activations[-1]) + b[i]
         S.append(s)
-        if i > 0:
-            sssnopp = S[-1]
 
         if calc_mean_var:
             # mean
@@ -162,38 +157,28 @@ def evaluate_classifier_batch_norm(X, W, b, M=[], V=[]):
 
 
 def batch_norm(s, m, v):
-    return (s-m)/np.sqrt(v + 0.001)  # small epsilon to not sqrt(0)
+    return (s-m)/np.sqrt(v + 0.000001)  # small epsilon to not sqrt(0)
 
 
-def batch_norm_back_pass_old(djdshat, s, m, v):
+def batch_norm_back_pass(djdshat, s, m, v):
+    n = s.shape[1]
     vb = v + 0.0000001  # adding small epsilon to avoid zero division
     Vb_12 = np.diag((np.power(vb, -1/2)).reshape(-1))
     Vb_32 = np.diag((np.power(vb, -3/2)).reshape(-1))
 
-    n = s.shape[1]
+    score_m_vector = np.diag(s-m).reshape(1, -1)
 
-    djdvb = np.zeros((1, s.shape[0]))
-    djdmy = np.zeros((1, s.shape[0]))
+    djdvb = (1/2) * np.sum(np.multiply(np.matmul(djdshat, Vb_32), score_m_vector), 0)
+    djdmy = (-1) * np.sum(np.matmul(djdshat, Vb_12), 0)
 
-    for i in range(n):
-        score_diag = np.diag((s[:, i].reshape(-1, 1) - m).reshape(-1))
-        temp_prod = np.matmul(djdshat[i, :].reshape(1, -1), Vb_32)
-        djdvb += np.matmul(temp_prod, score_diag)
+    djdvb_mat = npm.repmat(djdvb, n, 1)
+    djdmy_mat = npm.repmat(djdmy, n, 1)
 
-        djdmy += np.matmul(s[:, i].reshape(1, -1), Vb_12)
+    part_1 = np.matmul(djdshat, Vb_12)
+    part_2 = (2/n) * np.multiply(djdvb_mat, score_m_vector)
+    part_3 = djdmy_mat/n
 
-    djdvb *= (-1/2)
-    djdmy *= (-1)
-
-    djds = np.zeros(djdshat.shape)
-
-    for i in range(n):
-        score_diag = np.diag((s[:, i].reshape(-1, 1) - m).reshape(-1))
-        part_1 = np.matmul(djdshat[i, :].reshape(1, -1), Vb_12)
-        part_2 = (2/n) * np.matmul(djdvb, score_diag)
-        part_3 = djdmy * (1/n)
-
-        djds[i, :] = part_1 + part_2 + part_3
+    djds = (part_1 + part_2 + part_3)
 
     return djds
 
@@ -222,6 +207,13 @@ def compute_cost(X, Y, W, b, lamb):
 
 def compute_accuracy(X, y, W, b):
     P = evaluate_classifier(X, W, b)[0]
+    preds = np.argmax(P, axis=0) #the predicted class for each picture
+    are_equal = np.sum(preds == y)
+    return are_equal/preds.shape[0]
+
+
+def compute_accuracy_batch_norm(X, y, W, b, M, V):
+    P = evaluate_classifier_batch_norm(X, W, b, M, V)[0]
     preds = np.argmax(P, axis=0) #the predicted class for each picture
     are_equal = np.sum(preds == y)
     return are_equal/preds.shape[0]
@@ -461,3 +453,73 @@ def mini_batch_GD(X, X_val, Y, Y_val, n_batch, eta, n_epochs, W, b, lamb, rho, d
     plt.show()
 
     return Wstar, bstar
+
+def mini_batch_GD_batch_norm(X, X_val, Y, Y_val, n_batch, eta, n_epochs, W, b, lamb, rho, dr):
+    alpha = 0.99
+    int_cost = compute_cost(X, Y, W, b, lamb)
+
+    J_tr = []
+    J_val = []
+
+    vb = []
+    vW = []
+
+    move_mean = []
+    move_vari = []
+
+    for i in range(len(W)):
+        # Initialize
+        vb.append(np.zeros((W[i].shape[0], 1)))
+        vW.append(np.zeros(W[i].shape))
+
+    for i in range(n_epochs):
+        for j in range(int(X.shape[1]/n_batch)):
+            j_start = j * n_batch
+            j_end = (j+1) * n_batch
+            Xbatch = X[:, j_start: j_end]
+            Ybatch = Y[:, j_start: j_end]
+
+            P, H, S, M, V = evaluate_classifier_batch_norm(Xbatch, W, b)
+
+            if i == 0 and j == 0:
+                move_mean = M
+                move_vari = V
+            else:
+                for lay in range(len(W)):
+                    move_mean[lay] = alpha*move_mean[lay] + (1-alpha)*M[lay]
+                    move_vari[lay] = alpha*move_vari[lay] + (1-alpha)*V[lay]
+
+            djdb, djdw = compute_gradients_batch_norm(Xbatch, Ybatch, P, H, S, M, V, W, lamb)
+
+            for hl in range(len(W)):  # for every hidden layer
+                vb[hl] = (vb[hl] * rho) + (eta * djdb[hl])
+                vW[hl] = (vW[hl] * rho) + (eta * djdw[hl])
+
+                b[hl] -= vb[hl]
+                W[hl] -= vW[hl]
+
+        J_tr.append(compute_cost(X, Y, W, b, lamb))
+        J_val.append(compute_cost(X_val, Y_val, W, b, lamb))
+
+        #print("TR Cost for epoch ", i, " is ", J_tr[i])
+        #print("VAL Cost for epoch ", i, " is ", J_val[i])
+        print("    Epoch ", i, " TR: ", J_tr[i], " VAL: ", J_val[i])
+
+        if J_tr[-1] > 3* int_cost:
+            print("J_tr[-1] > 3* int_cost")
+            break
+
+        eta *= dr
+
+    Wstar = W
+    bstar = b
+
+    epochs = [x + 1 for x in range(n_epochs)]
+    plt.plot(epochs, J_tr, label="Training")
+    plt.plot(epochs, J_val, label="Validation")
+    plt.legend()
+    plt.ylabel("Loss")
+    plt.xlabel("Epochs")
+    plt.show()
+
+    return Wstar, bstar, move_mean, move_vari
