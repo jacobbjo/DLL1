@@ -1,31 +1,23 @@
-def batch_norm_back_pass_prev_try(djdshat, s, m, v):
+import numpy.matlib as npm
+
+def batch_norm_back_pass_tov(djdshat, s, m, v):
+    n = s.shape[1]
     vb = v + 0.0000001  # adding small epsilon to avoid zero division
     Vb_12 = np.diag((np.power(vb, -1/2)).reshape(-1))
     Vb_32 = np.diag((np.power(vb, -3/2)).reshape(-1))
 
-    n = s.shape[1]
+    score_m_vector = np.diag(s-m).reshape(1, -1)
 
-    djdvb = np.zeros((1, s.shape[0]))
-    djdmy = np.zeros((1, s.shape[0]))
+    djdvb = (1/2) * np.sum(np.multiply(np.matmul(djdshat, Vb_32), score_m_vector), 0)
+    djdmy = (-1) * np.sum(np.matmul(djdshat, Vb_12), 0)
 
-    for i in range(n):
-        score_diag = np.diag((s[:, i].reshape(-1, 1) - m).reshape(-1))
-        temp_prod = np.matmul(djdshat[i, :].reshape(1, -1), Vb_32)
-        djdvb += np.matmul(temp_prod, score_diag)
+    djdvb_mat = npm.repmat(djdvb, n, 1)
+    djdmy_mat = npm.repmat(djdmy, n, 1)
 
-        djdmy += np.matmul(s[:, i].reshape(1, -1), Vb_12)
+    part_1 = np.matmul(djdshat, Vb_12)
+    part_2 = (2/n) * np.multiply(djdvb_mat, score_m_vector)
+    part_3 = djdmy_mat/n
 
-    djdvb *= (-1/2)
-    djdmy *= (-1)
-
-    djds = np.zeros(djdshat.shape)
-
-    for i in range(n):
-        score_diag = np.diag((s[:, i].reshape(-1, 1) - m).reshape(-1))
-        part_1 = np.matmul(djdshat[i, :].reshape(1, -1), Vb_12)
-        part_2 = (2/n) * np.matmul(djdvb, score_diag)
-        part_3 = djdmy * (1/n)
-
-        djds[i, :] = part_1 + part_2 + part_3
+    djds = (part_1 + part_2 + part_3)
 
     return djds
