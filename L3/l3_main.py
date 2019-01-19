@@ -35,9 +35,7 @@ def main():
     LOAD = True
 
     mean_x = np.mean(X_tr, axis=1)
-
     mean_x = np.reshape(mean_x, (-1, 1))
-
     X_tr -= mean_x
     X_val -= mean_x
     X_test -= mean_x
@@ -47,16 +45,13 @@ def main():
     dim_img = len(X_val)
 
     W, b = get_parameters_he(dim_img, am_labels, am_nodes, 1337)
-
-    #W = load_mats("parameters_50_weights", "mats")
-    #b = load_mats("parameters_50_bias", "mats")
-
+#
 #    P, H, S, M, V = evaluate_classifier_batch_norm(X_tr[:, 0:100], W, b)
 #
 #    djdb, djdw = compute_gradients_batch_norm(X_tr[:, 0:100], Y_tr[:, 0:100], P, H, S, M, V, W, 0)
 #
-    #djdb, djdw = compute_gradients(X_tr[:, 0:100], Y_tr[:, 0:100], P, H, W, 0.001)
-
+#    #djdb, djdw = compute_gradients(X_tr[:, 0:100], Y_tr[:, 0:100], P, H, W, 0.001)
+#
 #    if LOAD:
 #        djdb2 = load_mats("djdb2_50_30", "mats")
 #        djdw2 = load_mats("djdw2_50_30", "mats")
@@ -85,40 +80,40 @@ def main():
 
 ### FINDING PAIRS
 
-#    n_batch = 100
-#    n_epochs = 20
-#    rho = 0.9
-#    dr = 0.95  # decay rate
-#
-#    eta_lower = 0.00005
-#    eta_upper = 0.05
-#
-#    lamb_lower = 0.001
-#    lamb_upper = 0.01
-#
-#    pairing_tries = 100
-#
-#    results = np.zeros((pairing_tries, 3))
-#
-#    for t in range(pairing_tries):
-#
-#        eta = random.uniform(eta_lower, eta_upper)
-#        lamb = random.uniform(lamb_lower, lamb_upper)
-#
-#        W, b = get_parameters_he(dim_img, am_labels, am_nodes, 1337)
-#
-#        Wstar, bstar, move_mean, move_vari = mini_batch_GD_batch_norm(X_tr, X_val, Y_tr, Y_val, n_batch, eta, n_epochs, W, b, lamb, rho, dr)
-#
-#        acc = compute_accuracy_batch_norm(X_val, y_val, Wstar, bstar, move_mean, move_vari)
-#
-#        print("pair: " + str(t) + " acc: " + str(acc), " eta: " + str(eta) + " lamb: " + str(lamb))
-#
-#        results[t, :] = [acc, eta, lamb]
-#
-#        # Sort results based on descending accuracy
-#        results = results[results[:, 0].argsort()[::-1]]
-#
-#        np.savetxt("results.txt", results, fmt="%1.5f")
+    n_batch = 100
+    n_epochs = 20
+    rho = 0.9
+    dr = 0.95  # decay rate
+
+    eta_lower = 0.05
+    eta_upper = 0.1
+
+    lamb_lower = 0.002
+    lamb_upper = 0.009
+
+    pairing_tries = 100
+
+    results = np.zeros((pairing_tries, 3))
+
+    for t in range(pairing_tries):
+
+        eta = random.uniform(eta_lower, eta_upper)
+        lamb = random.uniform(lamb_lower, lamb_upper)
+
+        W, b = get_parameters_he(dim_img, am_labels, am_nodes, 1337)
+
+        Wstar, bstar, move_mean, move_vari = mini_batch_GD_batch_norm(X_tr, X_val, Y_tr, Y_val, n_batch, eta, n_epochs, W, b, lamb, rho, dr)
+
+        acc = compute_accuracy_batch_norm(X_val, y_val, Wstar, bstar, move_mean, move_vari)
+
+        print("pair: " + str(t) + " acc: " + str(acc), " eta: " + str(eta) + " lamb: " + str(lamb))
+
+        results[t, :] = [acc, eta, lamb]
+
+        # Sort results based on descending accuracy
+        results = results[results[:, 0].argsort()[::-1]]
+
+        np.savetxt("results.txt", results, fmt="%1.5f")
 
 
 
@@ -127,22 +122,25 @@ def main():
 #    n_epochs = 150
 #    rho = 0.9
 #    dr = 0.95  # decay rate
-#    eta = 0.05
-#    lamb = 0.0001
-
-    n_batch = 10
-    n_epochs = 150
-    rho = 0.9
-    dr = 1  # decay rate
-    eta = 0.05
-    lamb = 0
-
-
-    Wstar, bstar, move_mean, move_vari = mini_batch_GD_batch_norm(X_tr[:, 0:100], X_val[:, 0:100], Y_tr[:, 0:100], Y_val[:, 0:100], n_batch, eta, n_epochs, W, b, lamb, rho, dr)
-
-    acc = compute_accuracy_batch_norm(X_test, y_test, Wstar, bstar, move_mean, move_vari)
-
-    print("Accuracy after training: ", acc)
+#    eta = 0.01
+#    lamb = 0
+#
+#    #n_batch = 100
+#    #n_epochs = 20
+#    #rho = 0.9
+#    #dr = 0.95  # decay rate
+#    #eta = 0.0575
+#    #lamb = 0.00118
+#
+#
+#    Wstar, bstar, move_mean, move_vari = mini_batch_GD_batch_norm(X_tr[:, 0:100], X_val[:, 0:100], Y_tr[:, 0:100], Y_val[:, 0:100], n_batch, eta, n_epochs, W, b, lamb, rho, dr)
+#    #Wstar, bstar, move_mean, move_vari = mini_batch_GD_batch_norm(X_tr, X_val, Y_tr, Y_val, n_batch, eta, n_epochs, W, b, lamb, rho, dr)
+#
+#
+#
+#    acc = compute_accuracy_batch_norm(X_test, y_test, Wstar, bstar, move_mean, move_vari)
+#
+#    print("Accuracy after training: ", acc)
 
 
 

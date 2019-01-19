@@ -333,11 +333,10 @@ def compute_gradients_batch_norm(X, Y, P, H, S, M, V, W, lamb):
             for ind in range(X.shape[1]):
                 gpart = g[ind, :].reshape(-1, 1)
                 hpart = H[i][:, ind].reshape(-1, 1)
-                #hpart = H[i-1][:, ind].reshape(-1, 1)
 
                 dldw[i] += np.matmul(gpart, hpart.T)
 
-                ind_fun = np.where(hpart > 0, 1, 0).reshape(-1, 1)
+                ind_fun = np.diag(np.where(hpart > 0, 1, 0)[:, 0])
 
                 g_temp = np.matmul(gpart.T, W[i])
                 g_new[ind, :] = np.matmul(g_temp, ind_fun)
@@ -471,7 +470,7 @@ def mini_batch_GD(X, X_val, Y, Y_val, n_batch, eta, n_epochs, W, b, lamb, rho, d
 
 def mini_batch_GD_batch_norm(X, X_val, Y, Y_val, n_batch, eta, n_epochs, W, b, lamb, rho, dr):
     alpha = 0.99
-    int_cost = compute_cost(X, Y, W, b, lamb)
+    int_cost = compute_cost_batch_norm(X, Y, W, b, lamb)
 
     J_tr = []
     J_val = []
@@ -513,8 +512,6 @@ def mini_batch_GD_batch_norm(X, X_val, Y, Y_val, n_batch, eta, n_epochs, W, b, l
                 W[hl] -= vW[hl]
 
 
-        #J_tr.append(compute_cost(X, Y, W, b, lamb))
-        #J_val.append(compute_cost(X_val, Y_val, W, b, lamb))
         J_tr.append(compute_cost_batch_norm(X, Y, W, b, lamb))
         J_val.append(compute_cost_batch_norm(X_val, Y_val, W, b, lamb))
 
@@ -531,12 +528,12 @@ def mini_batch_GD_batch_norm(X, X_val, Y, Y_val, n_batch, eta, n_epochs, W, b, l
     Wstar = W
     bstar = b
 
-    epochs = [x + 1 for x in range(n_epochs)]
-    plt.plot(epochs, J_tr, label="Training")
-    plt.plot(epochs, J_val, label="Validation")
-    plt.legend()
-    plt.ylabel("Loss")
-    plt.xlabel("Epochs")
-    plt.show()
+    #epochs = [x + 1 for x in range(n_epochs)]
+    #plt.plot(epochs, J_tr, label="Training")
+    #plt.plot(epochs, J_val, label="Validation")
+    #plt.legend()
+    #plt.ylabel("Loss")
+    #plt.xlabel("Epochs")
+    #plt.show()
 
     return Wstar, bstar, move_mean, move_vari

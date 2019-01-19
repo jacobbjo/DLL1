@@ -21,3 +21,33 @@ def batch_norm_back_pass_tov(djdshat, s, m, v):
     djds = (part_1 + part_2 + part_3)
 
     return djds
+
+
+def cross_entropy_loss_batch(data, onehots, W, b):
+    P = evaluate_classifier_batch_norm(data, W, b)[0]
+
+    #P = eval_parameters[3]
+
+    sum = 0
+    for image in range(data.shape[1]):
+
+        del1 = np.transpose(onehots[:, image].reshape(-1, 1))
+        del2 = P[:, image].reshape(-1, 1)
+        mullen = np.matmul(del1, del2)
+        loggen = np.log(mullen)
+
+        sum += np.sum(loggen)
+    cross_entropy = -(1/data.shape[1] * sum)
+
+    return cross_entropy
+
+
+def compute_cost_batch_norm(data, onehots, W, b, lambd):
+    cross_entropy = cross_entropy_loss_batch(data, onehots, W, b)
+    sum_weights = 0
+
+    for i in range(len(W)):
+        sum_weights += np.sum(np.power(W[i], 2))
+    l2 = lambd * sum_weights
+
+    return cross_entropy + l2
