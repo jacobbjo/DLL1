@@ -27,7 +27,7 @@ def main():
 #    X_val = X_tr4[:, 9000:10000]
 #    Y_val = Y_tr4[:, 9000:10000]
 #    y_val = y_tr4[9000:10000]
-
+#
     X_val, Y_val, y_val = readfile("../Datasets/data_batch_2")
 
     X_test, Y_test, y_test = readfile("../Datasets/test_batch")
@@ -40,7 +40,7 @@ def main():
     X_val -= mean_x
     X_test -= mean_x
 
-    am_nodes = [50, 30]  # number of nodes for the hidden layers
+    am_nodes = [50]  # number of nodes for the hidden layers
 
     dim_img = len(X_val)
 
@@ -80,67 +80,70 @@ def main():
 
 ### FINDING PAIRS
 
-    n_batch = 100
-    n_epochs = 20
-    rho = 0.9
-    dr = 0.95  # decay rate
-
-    eta_lower = 0.05
-    eta_upper = 0.1
-
-    lamb_lower = 0.002
-    lamb_upper = 0.009
-
-    pairing_tries = 100
-
-    results = np.zeros((pairing_tries, 3))
-
-    for t in range(pairing_tries):
-
-        eta = random.uniform(eta_lower, eta_upper)
-        lamb = random.uniform(lamb_lower, lamb_upper)
-
-        W, b = get_parameters_he(dim_img, am_labels, am_nodes, 1337)
-
-        Wstar, bstar, move_mean, move_vari = mini_batch_GD_batch_norm(X_tr, X_val, Y_tr, Y_val, n_batch, eta, n_epochs, W, b, lamb, rho, dr)
-
-        acc = compute_accuracy_batch_norm(X_val, y_val, Wstar, bstar, move_mean, move_vari)
-
-        print("pair: " + str(t) + " acc: " + str(acc), " eta: " + str(eta) + " lamb: " + str(lamb))
-
-        results[t, :] = [acc, eta, lamb]
-
-        # Sort results based on descending accuracy
-        results = results[results[:, 0].argsort()[::-1]]
-
-        np.savetxt("results.txt", results, fmt="%1.5f")
+#    n_batch = 100
+#    n_epochs = 20
+#    rho = 0.9
+#    dr = 0.95  # decay rate
+#
+#    eta_lower = 0.05
+#    eta_upper = 0.1
+#
+#    lamb_lower = 0.002
+#    lamb_upper = 0.009
+#
+#    pairing_tries = 100
+#
+#    results = np.zeros((pairing_tries, 3))
+#
+#    for t in range(pairing_tries):
+#
+#        eta = random.uniform(eta_lower, eta_upper)
+#        lamb = random.uniform(lamb_lower, lamb_upper)
+#
+#        W, b = get_parameters_he(dim_img, am_labels, am_nodes, 1337)
+#
+#        Wstar, bstar, move_mean, move_vari = mini_batch_GD_batch_norm(X_tr, X_val, Y_tr, Y_val, n_batch, eta, n_epochs, W, b, lamb, rho, dr)
+#
+#        acc = compute_accuracy_batch_norm(X_val, y_val, Wstar, bstar, move_mean, move_vari)
+#
+#        print("pair: " + str(t) + " acc: " + str(acc), " eta: " + str(eta) + " lamb: " + str(lamb))
+#
+#        results[t, :] = [acc, eta, lamb]
+#
+#        # Sort results based on descending accuracy
+#        results = results[results[:, 0].argsort()[::-1]]
+#
+#        np.savetxt("results.txt", results, fmt="%1.5f")
 
 
 
 ### FINAL NETWORK STUFF
-#    n_batch = 10
-#    n_epochs = 150
-#    rho = 0.9
-#    dr = 0.95  # decay rate
-#    eta = 0.01
-#    lamb = 0
-#
-#    #n_batch = 100
-#    #n_epochs = 20
-#    #rho = 0.9
-#    #dr = 0.95  # decay rate
-#    #eta = 0.0575
-#    #lamb = 0.00118
-#
-#
-#    Wstar, bstar, move_mean, move_vari = mini_batch_GD_batch_norm(X_tr[:, 0:100], X_val[:, 0:100], Y_tr[:, 0:100], Y_val[:, 0:100], n_batch, eta, n_epochs, W, b, lamb, rho, dr)
-#    #Wstar, bstar, move_mean, move_vari = mini_batch_GD_batch_norm(X_tr, X_val, Y_tr, Y_val, n_batch, eta, n_epochs, W, b, lamb, rho, dr)
-#
-#
-#
-#    acc = compute_accuracy_batch_norm(X_test, y_test, Wstar, bstar, move_mean, move_vari)
-#
-#    print("Accuracy after training: ", acc)
+    n_batch = 100
+    n_epochs = 10
+    rho = 0.9
+    dr = 0.95  # decay rate
+    eta = 0.1
+    lamb = 0.001
+
+    #n_batch = 100
+    #n_epochs = 20
+    #rho = 0.9
+    #dr = 0.95  # decay rate
+    #eta = 0.0575
+    #lamb = 0.00118
+
+
+    #Wstar, bstar, move_mean, move_vari = mini_batch_GD_batch_norm(X_tr[:, 0:100], X_val[:, 0:100], Y_tr[:, 0:100], Y_val[:, 0:100], n_batch, eta, n_epochs, W, b, lamb, rho, dr)
+    W#star, bstar, move_mean, move_vari = mini_batch_GD_batch_norm(X_tr, X_val, Y_tr, Y_val, n_batch, eta, n_epochs, W, b, lamb, rho, dr)
+
+    #acc = compute_accuracy_batch_norm(X_test, y_test, Wstar, bstar, move_mean, move_vari)
+
+    Wstar, bstar = mini_batch_GD(X_tr, X_val, Y_tr, Y_val, n_batch, eta, n_epochs, W, b, lamb, rho, dr)
+
+    acc = compute_accuracy(X_test, y_test, Wstar, bstar)
+
+
+    print("Accuracy after training: ", acc)
 
 
 
