@@ -25,6 +25,7 @@ def main():
     X = np.array([one_hot_vec(char_to_ind[char], k) for char in X_chars])[:, :, 0].T
     Y = np.array([one_hot_vec(char_to_ind[char], k) for char in Y_chars])[:, :, 0].T
 
+    A, H, P, l = forward_pass(b, c, U, W, V, X, Y, h0)
 
     print("lol")
 

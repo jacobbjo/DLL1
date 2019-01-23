@@ -70,6 +70,67 @@ def one_hot_vec(ind, n):
     return vec
 
 
+def forward_pass(b, c, U, W, V, X, Y, h):
+    m = h.shape[0]
+    k = X.shape[0]
+    n = X.shape[1]
+
+    l = 0
+    A = np.zeros((m, n))
+    H = np.zeros((m, n))
+    P = np.zeros((k, n))
+
+    for t in range(n):
+        x = X[:, t:t+1]
+        a = np.matmul(W, h) + np.matmul(U, x) + b
+        h = np.tanh(a)
+        o = np.matmul(V, h) + c
+        p = softmax(o)
+
+        A[:, t] = a
+        H[:, t] = h
+        P[:, t] = p
+
+        l += np.log(np.matmul(Y[:, t:t+1], p))
+
+    return A, H, P, l
+
+
+def backward_pass(b, c, U, W, V, X, Y, A, H, P, h):
+    m = h.shape[0]
+    k = X.shape[0]
+    n = X.shape[1]
+
+    dldb = np.zeros(b.shape)
+    dldc = np.zeros(c.shape)
+    dldU = np.zeros(U.shape)
+    dldW = np.zeros(W.shape)
+    dldV = np.zeros(V.shape)
+
+    dldo = -(Y - P)                                     #TODO: TRANSPOSE?!??!?!!??!?!
+
+    dldH = np.zeros((n, m))
+    dldH[n-1, :] = np.matmul(dldo[:, n-1:n].T, V)
+
+    dldA = np.zeros((n, m))
+    dldA[n-1, :] = np.matmul(dldH[:, n-1:n], np.diag(1 - np.exp(np.tanh(A[:, n-1]), 2)))
+
+    for t in reversed(range(n-2)):                      #TODO: SHOULD IT BE n-2??????
+        dldH[t, :] = np.matmul(dldo[:, t:t+1].T, V) + np.matmul(dldA[t+1:t+2, :], W)
+        dldA[t, :] = np.matmul(dldH[:, t:t+1], np.diag(1 - np.exp(np.tanh(A[:, t]), 2)))
+
+    dldb += np.sum(dldA, axis = 0).T
+    dldc += np.sum(dldo, axis=1)
+    dldU += np.matmul(dldA.T, X.T)
+    dldV += np.matmul(dldo, H)                          #TODO: TRANSPOSE THE RESULT OR H?!??!?!!??!?!
+    dldW += np.matmul(dldA[0:1, :].T, h.T)              #TODO: CHECK SIZE OF LILLA H
+
+    for t in range(1, n):
+        dldW += np.matmul(dldA[t:t+1, :].T, H[:, t-1:t].T)
+
+    return dldb, dldc, dldU, dldW, dldV
+
+
 
 def save_mats(mat_list, name, folder):
     for i in range(len(mat_list)):
