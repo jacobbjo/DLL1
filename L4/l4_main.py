@@ -5,7 +5,7 @@ def main():
     book_data, char_to_ind, ind_to_char = read_file("../Datasets/goblet_book.txt")
 
     k = len(char_to_ind)
-    m = 100
+    m = 5
     eta = 0.1
     seq_length = 25
 
@@ -16,8 +16,8 @@ def main():
 
     b, c, U, W, V = get_parameters(k, m, 1337)
 
-    lol = get_seq(b, c, U, W, V, h0, x0, 50, ind_to_char)
-    print(lol)
+    #a_seq = get_seq(b, c, U, W, V, h0, x0, 50, ind_to_char)
+    #print(a_seq)
 
     X_chars = book_data[0: seq_length]
     Y_chars = book_data[1: seq_length + 1]
@@ -26,6 +26,8 @@ def main():
     Y = np.array([one_hot_vec(char_to_ind[char], k) for char in Y_chars])[:, :, 0].T
 
     A, H, P, l = forward_pass(b, c, U, W, V, X, Y, h0)
+
+    dldb, dldc, dldU, dldW, dldV = backward_pass(b, c, U, W, V, X, Y, A, H, P, h0)
 
     print("lol")
 
