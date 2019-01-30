@@ -13,7 +13,7 @@ def read_file(file):
     char_to_ind = {}
     ind_to_char = {}
 
-    for i, char in enumerate(sorted(unique_chars)):
+    for i, char in enumerate(sorted(unique_chars)[:-2]):
         char_to_ind[char] = i
         ind_to_char[i] = char
 
@@ -132,7 +132,6 @@ def backward_pass(b, c, U, W, V, X, Y, A, H, P, h):
     return dldb, dldc, dldU, dldW, dldV
 
 
-
 def save_mats(mat_list, name, folder):
     for i in range(len(mat_list)):
         file_path = folder + "/" + name + "_" + str(i)
@@ -162,6 +161,68 @@ def load_mats(name, folder):
         i += 1
 
     return mat_list
+
+
+
+def ComputeGradsNum(X, Y, b, c, U, W, V, h):
+    RNN = [b, c, U, W, V]
+    num_grads = []
+
+    hprev = np.zeros((W.shape[0], 1))
+
+    for k, f in enumerate(RNN):
+        print("Computing numerical gradient for field number: ", k)
+        num_grads.append(np.zeros(f.shape))
+
+        for i in range(f.shape[0]):
+            #print("   Row", i, "/", f.shape[0], "started")
+
+            for j in range(f.shape[1]):
+                f_try = np.copy(f)
+                f_try[i, j] -= h
+                RNN_try = RNN[:]
+                RNN_try[k] = f_try
+                l1 = forward_pass(*RNN_try, X, Y, hprev)[-1]
+
+                f_try = np.copy(f)
+                f_try[i, j] += h
+                RNN_try = RNN[:]
+                RNN_try[k] = f_try
+                l2 = forward_pass(*RNN_try, X, Y, hprev)[-1]
+
+                num_grads[-1][i, j] = (l2-l1)/(2*h)
+
+    return num_grads
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

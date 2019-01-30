@@ -1,5 +1,6 @@
 from L4.functions import *
 
+
 def main():
 
     book_data, char_to_ind, ind_to_char = read_file("../Datasets/goblet_book.txt")
@@ -16,6 +17,12 @@ def main():
 
     b, c, U, W, V = get_parameters(k, m, 1337)
 
+    np.savetxt("b_file.txt", b)
+    np.savetxt("c_file.txt", c)
+    np.savetxt("U_file.txt", U)
+    np.savetxt("W_file.txt", W)
+    np.savetxt("V_file.txt", V)
+
     #a_seq = get_seq(b, c, U, W, V, h0, x0, 50, ind_to_char)
     #print(a_seq)
 
@@ -28,6 +35,23 @@ def main():
     A, H, P, l = forward_pass(b, c, U, W, V, X, Y, h0)
 
     dldb, dldc, dldU, dldW, dldV = backward_pass(b, c, U, W, V, X, Y, A, H, P, h0)
+
+    print("lol")
+
+    dldb2, dldc2, dldU2, dldW2, dldV2 = ComputeGradsNum(X, Y, b, c, U, W, V, 0.0001)
+
+    diff_b = np.sum(np.abs(dldb - dldb2)) / b.size
+    diff_c = np.sum(np.abs(dldc - dldc2)) / c.size
+    diff_U = np.sum(np.abs(dldU - dldU2)) / U.size
+    diff_W = np.sum(np.abs(dldW - dldW2)) / W.size
+    diff_V = np.sum(np.abs(dldV - dldV2)) / V.size
+
+    print("diff_b: ", diff_b)
+    print("diff_c: ", diff_c)
+    print("diff_U: ", diff_U)
+    print("diff_W: ", diff_W)
+    print("diff_V: ", diff_V)
+
 
     print("lol")
 
