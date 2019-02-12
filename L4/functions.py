@@ -14,6 +14,7 @@ def read_file(file):
     ind_to_char = {}
 
     for i, char in enumerate(sorted(unique_chars)[:-2]):
+    #for i, char in enumerate(sorted(unique_chars)[:-2]):
         char_to_ind[char] = i
         ind_to_char[i] = char
 
@@ -31,6 +32,16 @@ def get_parameters(k, m, seed=-1):
     U = np.random.rand(m, k)*sig
     W = np.random.rand(m, m)*sig
     V = np.random.rand(k, m)*sig
+
+    return [b, c, U, W, V]
+
+
+def get_zero_grads(k, m):
+    b = np.zeros((m, 1))
+    c = np.zeros((k, 1))
+    U = np.zeros((m, k))
+    W = np.zeros((m, m))
+    V = np.zeros((k, m))
 
     return [b, c, U, W, V]
 
@@ -56,10 +67,10 @@ def get_seq(b, c, U, W, V, h, x, n, ind_to_char):
 
 
 def get_xnext(p):
-    cp = np.cumsum(p)
+    cp = np.cumsum(p, axis=0)
     a = np.random.rand(1)
     ixs = np.where((cp - a) > 0)
-    ii = ixs[0][0]
+    ii = ixs[0]
 
     return ii
 
@@ -128,6 +139,12 @@ def backward_pass(b, c, U, W, V, X, Y, A, H, P, h):
 
     for t in range(1, n):
         dldW += np.matmul(dldA[t:t+1, :].T, H[:, t-1:t].T)
+
+    # clipping the gradients
+    for grad in [dldb, dldc, dldU, dldW, dldV]:
+        grad[grad > 5] = 5
+        grad[grad < -5] = -5
+
 
     return dldb, dldc, dldU, dldW, dldV
 
