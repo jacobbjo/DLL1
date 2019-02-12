@@ -116,15 +116,15 @@ def backward_pass(b, c, U, W, V, X, Y, A, H, P, h):
     dldA[n-1, :] = np.matmul(dldH[n - 1:n, :], np.diag(1 - np.power(np.tanh(A[:, n - 1]), 2)))
 
 
-    for t in reversed(range(n-2)):
+    for t in reversed(range(n-1)):
         dldH[t, :] = np.matmul(dldo[:, t:t+1].T, V) + np.matmul(dldA[t+1:t+2, :], W)
         dldA[t, :] = np.matmul(dldH[t:t+1, :], np.diag(1 - np.power(np.tanh(A[:, t]), 2)))
 
-    dldb += np.sum(dldA, axis = 0).reshape(-1, 1)
+    dldb += np.sum(dldA, axis=0).reshape(-1, 1)
     dldc += np.sum(dldo, axis=1).reshape(-1, 1)
     dldU += np.matmul(dldA.T, X.T)
     dldV += np.matmul(dldo, H.T)
-    dldW += np.matmul(dldA[0:1, :].T, h.T)              #TODO: CHECK SIZE OF LILLA H
+    dldW += np.matmul(dldA[0:1, :].T, h.T)
 
     for t in range(1, n):
         dldW += np.matmul(dldA[t:t+1, :].T, H[:, t-1:t].T)
@@ -190,7 +190,7 @@ def ComputeGradsNum(X, Y, b, c, U, W, V, h):
                 RNN_try[k] = f_try
                 l2 = forward_pass(*RNN_try, X, Y, hprev)[-1]
 
-                num_grads[-1][i, j] = (l2-l1)/(2*h)
+                num_grads[-1][i, j] = -(l2-l1)/(2*h)
 
     return num_grads
 
