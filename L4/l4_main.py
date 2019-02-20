@@ -44,10 +44,11 @@ def main():
 #    print("diff_W: ", diff_W)
 #    print("diff_V: ", diff_V)
 
-    n_epochs = 20
+    n_epochs = 3
 
-    train_AdaGrad(n_epochs, eta, m, seq_length, book_data, char_to_ind, ind_to_char, RNN)
+    NEW_RNN = train_AdaGrad(n_epochs, eta, m, seq_length, book_data, char_to_ind, ind_to_char, RNN)
 
+    print("".join(get_seq(*NEW_RNN, h0, x0, 1000, ind_to_char)))
 
 
 if __name__ == "__main__":
